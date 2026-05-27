@@ -72,9 +72,9 @@ export class Player {
         let dx = 0;
         let dy = 0;
 
-        // Iterate backwards through the pressed keys (most recently pressed first)
+        // Iterate forwards through the pressed keys (oldest pressed first)
         // to find the active movement input.
-        for (let i = keysPressed.length - 1; i >= 0; i--) {
+        for (let i = 0; i < keysPressed.length; i++) {
             const code = keysPressed[i];
             if (code === 87 || code === 38) { // W or Up
                 dy = -1;
