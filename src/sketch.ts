@@ -23,28 +23,35 @@ export const sketch = (p: p5) => {
         player.spawn(p, grid);
 
         if (typeof window !== 'undefined') {
+            window.addEventListener('keydown', (e) => {
+                // Prevent space and arrow keys from scrolling the page
+                if ([32, 37, 38, 39, 40].includes(e.keyCode)) {
+                    e.preventDefault();
+                }
+                const code = e.keyCode;
+                if (!keysPressed.includes(code)) {
+                    keysPressed.push(code);
+                    keyPressTimes.set(code, p.millis());
+                    console.log("[INPUT] Native keydown:", code, "Active List:", [...keysPressed]);
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                const code = e.keyCode;
+                const index = keysPressed.indexOf(code);
+                if (index > -1) {
+                    keysPressed.splice(index, 1);
+                }
+                keyPressTimes.delete(code);
+                console.log("[INPUT] Native keyup:", code, "Active List:", [...keysPressed]);
+            });
+
             window.addEventListener('blur', () => {
                 keysPressed.length = 0;
                 keyPressTimes.clear();
+                console.log("[INPUT] Native blur: cleared keys");
             });
         }
-    };
-
-    p.keyPressed = () => {
-        if (!keysPressed.includes(p.keyCode)) {
-            keysPressed.push(p.keyCode);
-            keyPressTimes.set(p.keyCode, p.millis());
-            console.log("[INPUT] Key Pressed:", p.keyCode, "Active List:", [...keysPressed]);
-        }
-    };
-
-    p.keyReleased = () => {
-        const index = keysPressed.indexOf(p.keyCode);
-        if (index > -1) {
-            keysPressed.splice(index, 1);
-        }
-        keyPressTimes.delete(p.keyCode);
-        console.log("[INPUT] Key Released:", p.keyCode, "Active List:", [...keysPressed]);
     };
 
     p.draw = () => {
