@@ -12,7 +12,8 @@ export const sketch = (p: p5) => {
     let worldTick = 0;
     const player = new Player();
     const resourceManager = new ResourceManager();
-    const keys = new Set<number>();
+    const keysPressed: number[] = [];
+    const keyPressTimes = new Map<number, number>();
 
     p.setup = () => {
         const canvas = p.createCanvas(Config.grid.cols * Config.grid.tileSize, Config.grid.rows * Config.grid.tileSize);
@@ -20,20 +21,34 @@ export const sketch = (p: p5) => {
         canvas.elt.tabIndex = 0; 
         grid = generateGrid(p);
         player.spawn(p, grid);
+
+        if (typeof window !== 'undefined') {
+            window.addEventListener('blur', () => {
+                keysPressed.length = 0;
+                keyPressTimes.clear();
+            });
+        }
     };
 
     p.keyPressed = () => {
-        keys.add(p.keyCode);
+        if (!keysPressed.includes(p.keyCode)) {
+            keysPressed.push(p.keyCode);
+            keyPressTimes.set(p.keyCode, p.millis());
+        }
     };
 
     p.keyReleased = () => {
-        keys.delete(p.keyCode);
+        const index = keysPressed.indexOf(p.keyCode);
+        if (index > -1) {
+            keysPressed.splice(index, 1);
+        }
+        keyPressTimes.delete(p.keyCode);
     };
 
     p.draw = () => {
         p.background(30);
 
-        player.handleMovement(keys, grid);
+        player.handleMovement(keysPressed, keyPressTimes, p.millis(), grid);
         player.update();
 
         worldTick++;

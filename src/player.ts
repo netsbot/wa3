@@ -11,6 +11,8 @@ export class Player {
     targetX: number = 0;
     targetY: number = 0;
     move: boolean = false;
+    lastActiveKey: number = -1;
+    lastMoveStartTime: number = 0;
 
     spawn(p: p5, grid: Tile[][]) {
         while (true) {
@@ -63,25 +65,65 @@ export class Player {
         this.move = true;
     }
 
-    handleMovement(keys: Set<number>, grid: Tile[][]) {
+    handleMovement(keysPressed: number[], keyPressTimes: Map<number, number>, currentTime: number, grid: Tile[][]) {
         if (this.move) return;
 
+        let activeKey = -1;
         let dx = 0;
         let dy = 0;
 
-        // Use key codes: W=87, A=65, S=83, D=68
-        // Added arrow keys: Up=38, Down=40, Left=37, Right=39
-        if (keys.has(87) || keys.has(38)) {
-            dy = -1; // W or Up
-        } else if (keys.has(83) || keys.has(40)) {
-            dy = 1;  // S or Down
-        } else if (keys.has(65) || keys.has(37)) {
-            dx = -1; // A or Left
-        } else if (keys.has(68) || keys.has(39)) {
-            dx = 1;  // D or Right
+        // Iterate backwards through the pressed keys (most recently pressed first)
+        // to find the active movement input.
+        for (let i = keysPressed.length - 1; i >= 0; i--) {
+            const code = keysPressed[i];
+            if (code === 87 || code === 38) { // W or Up
+                dy = -1;
+                activeKey = code;
+                break;
+            } else if (code === 83 || code === 40) { // S or Down
+                dy = 1;
+                activeKey = code;
+                break;
+            } else if (code === 65 || code === 37) { // A or Left
+                dx = -1;
+                activeKey = code;
+                break;
+            } else if (code === 68 || code === 39) { // D or Right
+                dx = 1;
+                activeKey = code;
+                break;
+            }
         }
 
-        if (dx === 0 && dy === 0) return;
+        if (activeKey === -1) {
+            this.lastActiveKey = -1;
+            this.lastMoveStartTime = 0;
+            return;
+        }
+
+        // Reset repeat cycle if active key changed
+        if (activeKey !== this.lastActiveKey) {
+            this.lastMoveStartTime = 0;
+        }
+
+        // Timings for repeat delay and repeat interval
+        const repeatDelay = 220; // ms before continuous movement starts
+        const repeatInterval = 150; // ms between continuous steps
+
+        const pressTime = keyPressTimes.get(activeKey) || 0;
+        const timeHeld = currentTime - pressTime;
+
+        let shouldMove = false;
+        if (this.lastMoveStartTime === 0) {
+            shouldMove = true;
+        } else {
+            const timeSinceLastMove = currentTime - this.lastMoveStartTime;
+            if (timeHeld >= repeatDelay && timeSinceLastMove >= repeatInterval) {
+                shouldMove = true;
+            }
+        }
+
+        if (!shouldMove) return;
 
         const nx = this.x + dx;
         const ny = this.y + dy;
@@ -95,5 +137,7 @@ export class Player {
         this.targetX = nx * Config.grid.tileSize + Config.grid.tileSize / 2;
         this.targetY = ny * Config.grid.tileSize + Config.grid.tileSize / 2;
         this.move = true;
+        this.lastActiveKey = activeKey;
+        this.lastMoveStartTime = currentTime;
     }
 }
