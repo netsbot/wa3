@@ -140,6 +140,10 @@ export class Player {
             return;
         }
 
+        // Update active key and move start time because a move is being attempted
+        this.lastActiveKey = activeKey;
+        this.lastMoveStartTime = currentTime;
+
         const nx = this.x + dx;
         const ny = this.y + dy;
 
@@ -164,7 +168,5 @@ export class Player {
         this.targetX = nx * Config.grid.tileSize + Config.grid.tileSize / 2;
         this.targetY = ny * Config.grid.tileSize + Config.grid.tileSize / 2;
         this.move = true;
-        this.lastActiveKey = activeKey;
-        this.lastMoveStartTime = currentTime;
     }
 }
