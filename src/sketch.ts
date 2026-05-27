@@ -34,6 +34,7 @@ export const sketch = (p: p5) => {
         if (!keysPressed.includes(p.keyCode)) {
             keysPressed.push(p.keyCode);
             keyPressTimes.set(p.keyCode, p.millis());
+            console.log("[INPUT] Key Pressed:", p.keyCode, "Active List:", [...keysPressed]);
         }
     };
 
@@ -43,6 +44,7 @@ export const sketch = (p: p5) => {
             keysPressed.splice(index, 1);
         }
         keyPressTimes.delete(p.keyCode);
+        console.log("[INPUT] Key Released:", p.keyCode, "Active List:", [...keysPressed]);
     };
 
     p.draw = () => {

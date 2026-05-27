@@ -96,6 +96,9 @@ export class Player {
         }
 
         if (activeKey === -1) {
+            if (this.lastActiveKey !== -1) {
+                console.log("[MOVEMENT] No active movement keys. Resetting last active key.");
+            }
             this.lastActiveKey = -1;
             this.lastMoveStartTime = 0;
             return;
@@ -103,6 +106,7 @@ export class Player {
 
         // Reset repeat cycle if active key changed
         if (activeKey !== this.lastActiveKey) {
+            console.log("[MOVEMENT] Active key changed from", this.lastActiveKey, "to", activeKey);
             this.lastMoveStartTime = 0;
         }
 
@@ -114,24 +118,47 @@ export class Player {
         const timeHeld = currentTime - pressTime;
 
         let shouldMove = false;
+        let reason = "";
         if (this.lastMoveStartTime === 0) {
             shouldMove = true;
+            reason = "fresh press";
         } else {
             const timeSinceLastMove = currentTime - this.lastMoveStartTime;
             if (timeHeld >= repeatDelay && timeSinceLastMove >= repeatInterval) {
                 shouldMove = true;
+                reason = `held long enough (held: ${Math.round(timeHeld)}ms >= ${repeatDelay}ms, since last move: ${Math.round(timeSinceLastMove)}ms >= ${repeatInterval}ms)`;
+            } else {
+                reason = `waiting (held: ${Math.round(timeHeld)}ms / ${repeatDelay}ms, since last move: ${Math.round(timeSinceLastMove)}ms / ${repeatInterval}ms)`;
             }
         }
 
-        if (!shouldMove) return;
+        if (!shouldMove) {
+            // Log only occasionally or on state change to avoid console flooding
+            if (Math.random() < 0.05) { // 5% of frames to keep logs readable
+                console.log("[MOVEMENT] Check failed:", reason);
+            }
+            return;
+        }
 
         const nx = this.x + dx;
         const ny = this.y + dy;
 
-        if (nx < 0 || ny < 0 || nx >= Config.grid.cols || ny >= Config.grid.rows) return;
-        if (!grid[nx] || !grid[nx][ny]) return;
-        if (!grid[nx][ny].claimed) return;
+        console.log("[MOVEMENT] Try move to:", nx, ny, "reason:", reason);
 
+        if (nx < 0 || ny < 0 || nx >= Config.grid.cols || ny >= Config.grid.rows) {
+            console.log("[MOVEMENT] Blocked: Out of bounds");
+            return;
+        }
+        if (!grid[nx] || !grid[nx][ny]) {
+            console.log("[MOVEMENT] Blocked: Invalid tile references");
+            return;
+        }
+        if (!grid[nx][ny].claimed) {
+            console.log("[MOVEMENT] Blocked: Tile not claimed");
+            return;
+        }
+
+        console.log("[MOVEMENT] Moving to", nx, ny);
         this.x = nx;
         this.y = ny;
         this.targetX = nx * Config.grid.tileSize + Config.grid.tileSize / 2;
