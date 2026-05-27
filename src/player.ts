@@ -68,6 +68,22 @@ export class Player {
     handleMovement(keysPressed: number[], keyPressTimes: Map<number, number>, currentTime: number, grid: Tile[][]) {
         if (this.move) return;
 
+        // Count how many movement keys are currently held down
+        let moveKeyCount = 0;
+        for (let i = 0; i < keysPressed.length; i++) {
+            const code = keysPressed[i];
+            if (code === 87 || code === 38 || code === 83 || code === 40 ||
+                code === 65 || code === 37 || code === 68 || code === 39) {
+                moveKeyCount++;
+            }
+        }
+
+        if (moveKeyCount > 1) {
+            this.lastActiveKey = -1;
+            this.lastMoveStartTime = 0;
+            return;
+        }
+
         let activeKey = -1;
         let dx = 0;
         let dy = 0;
